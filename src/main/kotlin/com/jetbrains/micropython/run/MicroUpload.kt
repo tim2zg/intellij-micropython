@@ -26,9 +26,11 @@ fun getMicroUploadCommand(path: String, module: Module): List<String>? {
       .map { listOf("-X", it) }
       .flatten()
       .toList()
+  val files = ModuleRootManager.getInstance(module).contentRoots
+    val lultest = files.map { VfsUtilCore.getRelativePath(file, it) }
   return listOf(pythonPath, "${MicroPythonFacet.scriptsPath}/microupload.py", "-C", rootDir.path) +
       excludes +
-      listOf("-v", devicePath, path)
+      listOf("-v", devicePath, path, lultest.toString())
 }
 
 private fun getClosestRoot(file: VirtualFile, module: Module): VirtualFile? {

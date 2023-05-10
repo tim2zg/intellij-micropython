@@ -20,8 +20,10 @@ import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.micropython.run.MicroPythonRunConfiguration
+import com.jetbrains.micropython.settings.MicroPythonDevicesConfiguration
 import com.jetbrains.micropython.settings.MicroPythonTypeHints
 import com.jetbrains.micropython.settings.MicroPythonUsbId
 import com.jetbrains.micropython.settings.microPythonFacet
@@ -56,11 +58,12 @@ open class MicroBitDeviceProvider : MicroPythonDeviceProvider {
     get() = linkedSetOf("microbit")
 
   override fun getRunCommandLineState(configuration: MicroPythonRunConfiguration,
-                                      environment: ExecutionEnvironment): CommandLineState? {
+                                      environment: ExecutionEnvironment, project: Project): CommandLineState? {
     val pythonPath = configuration.module?.microPythonFacet?.pythonPath ?: return null
     return object : CommandLineState(environment) {
+
       override fun startProcess() =
-          OSProcessHandler(GeneralCommandLine(pythonPath, "-m", "uflash", configuration.path))
+          OSProcessHandler(GeneralCommandLine(pythonPath, "-m", "uflash" , MicroPythonDevicesConfiguration.getInstance(project).devicePath, configuration.path))
     }
   }
 

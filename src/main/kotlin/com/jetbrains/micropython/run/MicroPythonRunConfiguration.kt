@@ -82,7 +82,7 @@ class MicroPythonRunConfiguration(project: Project, factory: ConfigurationFactor
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
     val currentModule = environment.dataContext?.getData(LangDataKeys.MODULE) ?: module
-    val state = currentModule?.microPythonFacet?.configuration?.deviceProvider?.getRunCommandLineState(this, environment)
+    val state = currentModule?.microPythonFacet?.configuration?.deviceProvider?.getRunCommandLineState(this, environment, project)
 //    ComponentManagerImpl
     if (runReplOnSuccess && state != null) {
       return RunStateWrapper(state) {

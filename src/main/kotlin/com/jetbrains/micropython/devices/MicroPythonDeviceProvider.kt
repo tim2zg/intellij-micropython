@@ -19,6 +19,7 @@ package com.jetbrains.micropython.devices
 import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.micropython.run.MicroPythonRunConfiguration
 import com.jetbrains.micropython.settings.MicroPythonTypeHints
@@ -59,7 +60,7 @@ interface MicroPythonDeviceProvider {
     get() = emptySet()
 
   fun getRunCommandLineState(configuration: MicroPythonRunConfiguration,
-                             environment: ExecutionEnvironment): CommandLineState? = null
+                             environment: ExecutionEnvironment, project:Project): CommandLineState? = null
 
   val isDefault: Boolean
     get() = false

@@ -4,6 +4,7 @@ import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.micropython.run.MicroPythonRunConfiguration
 import com.jetbrains.micropython.run.getMicroUploadCommand
@@ -36,8 +37,11 @@ class RPiPicoDeviceProvider : MicroPythonDeviceProvider {
                                         |adafruit-ampy>=1.0.5,<1.1""".trimMargin())
   }
 
-  override fun getRunCommandLineState(configuration: MicroPythonRunConfiguration,
-                                      environment: ExecutionEnvironment): CommandLineState? {
+  override fun getRunCommandLineState(
+    configuration: MicroPythonRunConfiguration,
+    environment: ExecutionEnvironment,
+    project: Project
+  ): CommandLineState? {
     val module = configuration.module ?: return null
     val command = getMicroUploadCommand(configuration.path, module) ?: return null
 
