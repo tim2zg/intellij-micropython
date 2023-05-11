@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.micropython.run.MicroPythonRunConfiguration
 import com.jetbrains.micropython.run.betterUpload
-import com.jetbrains.micropython.run.getMicroUploadCommand
 import com.jetbrains.micropython.settings.MicroPythonTypeHints
 import com.jetbrains.micropython.settings.MicroPythonUsbId
 import com.jetbrains.python.packaging.PyPackageManager
@@ -46,22 +45,10 @@ class Esp8266DeviceProvider : MicroPythonDeviceProvider {
     project: Project
   ): CommandLineState? {
     val module = configuration.module ?: return null
-    val commands = betterUpload(configuration.path, module)
-    var commandFinal = ""
-
-    var isFirst = true
-
-    for (command in commands) {
-      if (isFirst) {
-        commandFinal = command
-        isFirst = false
-      } else {
-        commandFinal += " && " + command
-      }
-    }
+    val command = betterUpload(configuration.path, module)
 
     return object : CommandLineState(environment) {
-      override fun startProcess() = OSProcessHandler(GeneralCommandLine(commandFinal.split(" ")))
+      override fun startProcess() = OSProcessHandler(GeneralCommandLine(command.split(" ")))
     }
   }
 }

@@ -14,30 +14,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.pathString
 
-fun getMicroUploadCommand(path: String, module: Module): List<String>? {
-  val facet = module.microPythonFacet ?: return null
-  val pythonPath = facet.pythonPath ?: return null
-  val devicePath = facet.getOrDetectDevicePathSynchronously() ?: return null
-  val file = StandardFileSystems.local().findFileByPath(path) ?: return null
-  val rootDir = getClosestRoot(file, module) ?: return null
-  val excludeRoots = ModuleRootManager.getInstance(module).excludeRoots
-  val excludes = excludeRoots
-      .asSequence()
-      .filter { VfsUtil.isAncestor(file, it, false) }
-      .map { VfsUtilCore.getRelativePath(it, rootDir) }
-      .filterNotNull()
-      .map { listOf("-X", it) }
-      .flatten()
-      .toList()
-  val files = ModuleRootManager.getInstance(module).contentRoots
-    val lultest = files.map { VfsUtilCore.getRelativePath(file, it) }
-  return listOf(pythonPath, "${MicroPythonFacet.scriptsPath}/microupload.py", "-C", rootDir.path) +
-      excludes +
-      listOf("-v", devicePath, path, lultest.toString())
-}
-
-fun betterUpload(path: String, module: Module): MutableList<String> {
-    val commandsToRun = mutableListOf<String>()
+fun betterUpload(path: String, module: Module): String {
+    var command = ""
 
     val excludeRoots = ModuleRootManager.getInstance(module).excludeRoots
 
@@ -59,11 +37,15 @@ fun betterUpload(path: String, module: Module): MutableList<String> {
     val devicePath = facet?.getOrDetectDevicePathSynchronously()
 
 
+    command = pythonPath + " " + MicroPythonFacet.scriptsPath + "/pyboard.py -d " + devicePath + " -f cp "
+
     for (e in allFiles) {
-        commandsToRun.add(pythonPath + " " + MicroPythonFacet.scriptsPath + "/pyboard.py -d " + devicePath + " -f cp " + e + " :")
+        command = "$command$e "
     }
 
-    return commandsToRun
+    command = "$command:"
+
+    return command
 
 }
 
