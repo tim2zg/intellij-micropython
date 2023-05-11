@@ -10,6 +10,9 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.micropython.settings.MicroPythonFacet
 import com.jetbrains.micropython.settings.microPythonFacet
+import java.nio.file.Files
+import java.nio.file.Paths
+import kotlin.io.path.pathString
 
 fun getMicroUploadCommand(path: String, module: Module): List<String>? {
   val facet = module.microPythonFacet ?: return null
@@ -31,6 +34,37 @@ fun getMicroUploadCommand(path: String, module: Module): List<String>? {
   return listOf(pythonPath, "${MicroPythonFacet.scriptsPath}/microupload.py", "-C", rootDir.path) +
       excludes +
       listOf("-v", devicePath, path, lultest.toString())
+}
+
+fun betterUpload(path: String, module: Module): MutableList<String> {
+    val commandsToRun = mutableListOf<String>()
+
+    val excludeRoots = ModuleRootManager.getInstance(module).excludeRoots
+
+    val allFiles = mutableListOf<String>()
+    Files.walk(Paths.get(path))
+        .filter { Files.isRegularFile(it) }
+        .forEach {
+            if (it.toString().endsWith(".py")) {
+                for (e in excludeRoots) {
+                    if (!it.pathString.contains(e.path.replace("/", "\\"))) {
+                        allFiles.add(it.toString())
+                    }
+                }
+            }
+        }
+
+    val facet = module.microPythonFacet
+    val pythonPath = facet?.pythonPath
+    val devicePath = facet?.getOrDetectDevicePathSynchronously()
+
+
+    for (e in allFiles) {
+        commandsToRun.add(pythonPath + " " + MicroPythonFacet.scriptsPath + "/pyboard.py -d " + devicePath + " -f cp " + e + " :")
+    }
+
+    return commandsToRun
+
 }
 
 private fun getClosestRoot(file: VirtualFile, module: Module): VirtualFile? {

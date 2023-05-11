@@ -7,6 +7,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.micropython.run.MicroPythonRunConfiguration
+import com.jetbrains.micropython.run.betterUpload
 import com.jetbrains.micropython.run.getMicroUploadCommand
 import com.jetbrains.micropython.settings.MicroPythonTypeHints
 import com.jetbrains.micropython.settings.MicroPythonUsbId
@@ -45,11 +46,19 @@ class Esp8266DeviceProvider : MicroPythonDeviceProvider {
     project: Project
   ): CommandLineState? {
     val module = configuration.module ?: return null
-    val command = getMicroUploadCommand(configuration.path, module) ?: return null
+    val commands = betterUpload(configuration.path, module)
+    var commandFinal = ""
+
+    if (commands.size >= 1) {
+      commandFinal = commands[0]
+    } else {
+      for (command in commands) {
+        commandFinal = "$commandFinal && $command"
+      }
+    }
 
     return object : CommandLineState(environment) {
-      override fun startProcess() =
-          OSProcessHandler(GeneralCommandLine(command))
+      override fun startProcess() = OSProcessHandler(GeneralCommandLine(commandFinal))
     }
   }
 }
