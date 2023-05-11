@@ -49,16 +49,19 @@ class Esp8266DeviceProvider : MicroPythonDeviceProvider {
     val commands = betterUpload(configuration.path, module)
     var commandFinal = ""
 
-    if (commands.size >= 1) {
-      commandFinal = commands[0]
-    } else {
-      for (command in commands) {
-        commandFinal = "$commandFinal && $command"
+    var isFirst = true
+
+    for (command in commands) {
+      if (isFirst) {
+        commandFinal = command
+        isFirst = false
+      } else {
+        commandFinal += " && " + command
       }
     }
 
     return object : CommandLineState(environment) {
-      override fun startProcess() = OSProcessHandler(GeneralCommandLine(commandFinal))
+      override fun startProcess() = OSProcessHandler(GeneralCommandLine(commandFinal.split(" ")))
     }
   }
 }
