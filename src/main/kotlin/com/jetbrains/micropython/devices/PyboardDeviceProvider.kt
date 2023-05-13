@@ -23,7 +23,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.micropython.run.MicroPythonRunConfiguration
-import com.jetbrains.micropython.run.getMicroUploadCommand
+import com.jetbrains.micropython.run.betterUpload
 import com.jetbrains.micropython.settings.MicroPythonTypeHints
 import com.jetbrains.micropython.settings.MicroPythonUsbId
 import com.jetbrains.python.packaging.PyPackageManager
@@ -59,7 +59,7 @@ class PyboardDeviceProvider : MicroPythonDeviceProvider {
     project: Project
   ): CommandLineState? {
     val module = configuration.module ?: return null
-    val command = getMicroUploadCommand(configuration.path, module) ?: return null
+    val command = betterUpload(configuration.path, module) ?: return null
 
     return object : CommandLineState(environment) {
       override fun startProcess() =

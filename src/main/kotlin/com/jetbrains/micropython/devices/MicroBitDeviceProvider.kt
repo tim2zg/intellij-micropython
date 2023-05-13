@@ -24,10 +24,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.micropython.run.MicroPythonRunConfiguration
 import com.jetbrains.micropython.run.betterUpload
-import com.jetbrains.micropython.settings.MicroPythonDevicesConfiguration
 import com.jetbrains.micropython.settings.MicroPythonTypeHints
 import com.jetbrains.micropython.settings.MicroPythonUsbId
-import com.jetbrains.micropython.settings.microPythonFacet
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyRequirement
 
