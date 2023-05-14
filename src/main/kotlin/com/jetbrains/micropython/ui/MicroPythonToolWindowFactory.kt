@@ -25,8 +25,10 @@ class MicroPythonToolWindowFactory : ToolWindowFactory, DumbAware {
 
         toolWindow.contentManager.addContent(terminalContent)
         toolWindow.contentManager.setSelectedContent(terminalContent)
-        toolWindow.contentManager.addContent(contentFactory.createContent(hehe(module = ,toolWindow).contentPanel, "Calendar", false))
 
+        project.firstMicroPythonFacet?.let {
+            toolWindow.contentManager.addContent(contentFactory.createContent(hehe(it.module,toolWindow).contentPanel, "Calendar", false))
+        }
 
         project.firstMicroPythonFacet?.let {
             MicroPythonReplManager.getInstance(it.module).startREPL()
