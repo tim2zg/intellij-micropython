@@ -136,10 +136,12 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
     private fun getFile(files: List<String>) {
         // see if directory is already created
 
-        val directoryPath = module.project.basePath + "/onDevice"
+        val directoryPath = module.project.basePath + "/onDevice/"
         val dir = File(directoryPath)
 
         if (dir.isDirectory) {
+            println(ModuleRootManager.getInstance(module).excludeRoots.size)
+
             // get the device path
             val devicePath = deviceConfiguration.devicePath
             // get the python path
@@ -155,7 +157,7 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                 command = "$command:$actualFile "
             }
 
-            command = command + module.project.basePath + "/onDevice"
+            command = command + module.project.basePath + "/onDevice/"
 
             try {
                 val process = Runtime.getRuntime().exec(command)
@@ -183,9 +185,12 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
             // get the folder exclude list
             val excludeRoots = ModuleRootManager.getInstance(module).excludeRoots
 
+            println(ModuleRootManager.getInstance(module).excludeRoots.size)
+
             // add folder to exclude list
             ModuleRootManager.getInstance(module).excludeRoots[excludeRoots.size + 1] =
-                VirtualFileManager.getInstance().findFileByUrl("file://" + module.project.basePath + "/onDevice")!!
+                VirtualFileManager.getInstance().findFileByUrl("file://" + module.project.basePath + "/onDevice/")!!
+
 
             // get the device path
             val devicePath = deviceConfiguration.devicePath
@@ -202,7 +207,7 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                 command = "$command:$actualFile "
             }
 
-            command = command + module.project.basePath + "/onDevice"
+            command = command + module.project.basePath + "/onDevice/"
 
             try {
                 val process = Runtime.getRuntime().exec(command)
