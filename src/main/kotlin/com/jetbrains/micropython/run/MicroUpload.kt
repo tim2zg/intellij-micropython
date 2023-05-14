@@ -26,7 +26,9 @@ fun betterUpload(path: String, module: Module): String {
             if (it.toString().endsWith(".py")) {
                 for (e in excludeRoots) {
                     if (!it.pathString.contains(e.path.replace("/", "\\"))) {
-                        allFiles.add(it.toString())
+                        if (!it.pathString.contains("onDevice")) {
+                            allFiles.add(it.toString())
+                        }
                     }
                 }
             }
@@ -47,20 +49,4 @@ fun betterUpload(path: String, module: Module): String {
 
     return command
 
-}
-
-private fun getClosestRoot(file: VirtualFile, module: Module): VirtualFile? {
-  val roots = mutableSetOf<VirtualFile>().apply {
-    val rootManager = module.rootManager
-    addAll(rootManager.contentRoots)
-    addAll(rootManager.sourceRoots)
-  }
-  var parent: VirtualFile? = file
-  while (parent != null) {
-    if (parent in roots) {
-      break
-    }
-    parent = parent.parent
-  }
-  return parent ?: module.guessModuleDir()
 }

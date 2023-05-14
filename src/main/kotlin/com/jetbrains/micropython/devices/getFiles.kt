@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.jetbrains.micropython.settings.MicroPythonDevicesConfiguration
 import com.jetbrains.micropython.settings.MicroPythonFacet
 import com.jetbrains.micropython.settings.microPythonFacet
+import com.jetbrains.python.sdk.rootManager
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.io.BufferedReader
@@ -140,8 +141,6 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
         val dir = File(directoryPath)
 
         if (dir.isDirectory) {
-            println(ModuleRootManager.getInstance(module).excludeRoots.size)
-
             // get the device path
             val devicePath = deviceConfiguration.devicePath
             // get the python path
@@ -181,16 +180,6 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
         } else {
             // create new directory
             Files.createDirectory(Path(module.project.basePath + "/onDevice"))
-
-            // get the folder exclude list
-            val excludeRoots = ModuleRootManager.getInstance(module).excludeRoots
-
-            println(ModuleRootManager.getInstance(module).excludeRoots.size)
-
-            // add folder to exclude list
-            ModuleRootManager.getInstance(module).excludeRoots[excludeRoots.size + 1] =
-                VirtualFileManager.getInstance().findFileByUrl("file://" + module.project.basePath + "/onDevice/")!!
-
 
             // get the device path
             val devicePath = deviceConfiguration.devicePath
