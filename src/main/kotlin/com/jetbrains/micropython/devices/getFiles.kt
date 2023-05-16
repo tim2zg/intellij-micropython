@@ -1,12 +1,17 @@
 package com.jetbrains.micropython.devices
 
+import com.intellij.configurationStore.NOTIFICATION_GROUP_ID
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindow
 import com.jetbrains.micropython.settings.MicroPythonDevicesConfiguration
 import com.jetbrains.micropython.settings.MicroPythonFacet
+import com.jetbrains.micropython.settings.firstMicroPythonFacet
 import com.jetbrains.micropython.settings.microPythonFacet
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.rootManager
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
@@ -59,8 +64,22 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
         // get the script path (from the facet)
         val scriptPath = MicroPythonFacet.scriptsPath
 
-        // run a command to get the files
-        val command = "$pythonPath $scriptPath/pyboard.py -d $devicePath -f ls"
+        var command = ""
+
+        if (module.project.firstMicroPythonFacet?.configuration?.deviceProvider?.presentableName?.contains("Micro:bit") == true) {
+            var path = ""
+            if (pythonPath?.contains("/") == true) {
+                path = pythonPath.split("/").dropLast(1).joinToString("/")
+            } else {
+                path = pythonPath?.split("\\")?.dropLast(1)?.joinToString("\\")!!
+            }
+
+            command = "$path/ufs ls"
+        } else {
+            // run a command to get the files
+            command = "$pythonPath $scriptPath/pyboard.py -d $devicePath -f ls"
+        }
+
 
         try {
             val process = Runtime.getRuntime().exec(command)
@@ -71,26 +90,48 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                 val reader = BufferedReader(InputStreamReader(process.inputStream))
                 val output = reader.readText()
 
-                // split the output into lines
-                var lines = output.split("\r\n")
-                // remove first line
-                lines = lines.drop(1)
-                // remove last line
-                lines = lines.dropLast(1)
-                lines = lines.dropLast(1)
-                // parse the lines
-                for (line in lines) {
-                    val indexData = line.replace("           ", "").replace("          ", "").replace("         ", "").split(" ")
-                    files.add(FileData(indexData[1], indexData[0]))
+                if (module.project.firstMicroPythonFacet?.configuration?.deviceProvider?.presentableName?.contains("Micro:bit") == false) {
+                    // split the output into lines
+                    var lines = output.split("\r\n")
+                    // remove first line
+                    lines = lines.drop(1)
+                    // remove last line
+                    lines = lines.dropLast(1)
+                    lines = lines.dropLast(1)
+                    // parse the lines
+                    for (line in lines) {
+                        val indexData = line.replace("           ", "").replace("          ", "").replace("         ", "").split(" ")
+                        files.add(FileData(indexData[1], indexData[0]))
+                    }
+                } else {
+                    // split the output into lines
+                    var lines = output.split(" ")
+                    // parse the lines
+                    for (line in lines) {
+                        files.add(FileData(line.replace("\r\n", ""), "-"))
+                    }
                 }
+
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                    .createNotification("Refreshed Files", NotificationType.ERROR)
+                    .notify(module.project)
             } else {
                 println("Command failed with exit code $exitValue")
                 val reader = BufferedReader(InputStreamReader(process.inputStream))
                 val output = reader.readText()
                 println(output)
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                    .createNotification(output, NotificationType.ERROR)
+                    .notify(module.project)
             }
         } catch (e: IOException) {
             e.printStackTrace()
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                .createNotification("No interpreter", NotificationType.ERROR)
+                .notify(module.project)
         }
 
         return files
@@ -104,34 +145,93 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
         // get the script path (from the facet)
         val scriptPath = MicroPythonFacet.scriptsPath
 
-        // run a command to get the files
-        var command = "$pythonPath $scriptPath/pyboard.py -d $devicePath -f rm "
+        var command = ""
 
-        for (file in files) {
-            val actualFile = file.split("Size")[0]
-            command = "$command:$actualFile "
-        }
-
-        try {
-            val process = Runtime.getRuntime().exec(command)
-            process.waitFor()
-            val exitValue = process.exitValue()
-            if (exitValue == 0) {
-                println("Command executed successfully")
-                val reader = BufferedReader(InputStreamReader(process.inputStream))
-                val output = reader.readText()
-                println(output)
-                mainText.text = "Files: $files got deleted"
-                updateCurrentDateTime()
+        if (module.project.firstMicroPythonFacet?.configuration?.deviceProvider?.presentableName?.contains("Micro:bit") == true) {
+            var path = ""
+            if (pythonPath?.contains("/") == true) {
+                path = pythonPath.split("/").dropLast(1).joinToString("/")
             } else {
-                println("Command failed with exit code $exitValue")
-                val reader = BufferedReader(InputStreamReader(process.inputStream))
-                val output = reader.readText()
-                println(output)
+                path = pythonPath?.split("\\")?.dropLast(1)?.joinToString("\\")!!
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
+
+            command = "$path/ufs rm"
+
+            try {
+                val process = Runtime.getRuntime().exec(command)
+                process.waitFor()
+                val exitValue = process.exitValue()
+                if (exitValue == 0) {
+                    println("Command executed successfully")
+                    val reader = BufferedReader(InputStreamReader(process.inputStream))
+                    val output = reader.readText()
+                    println(output)
+                    mainText.text = "Files: $files got deleted"
+                    updateCurrentDateTime()
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                        .createNotification("Files got deleted", NotificationType.INFORMATION)
+                        .notify(module.project)
+                } else {
+                    println("Command failed with exit code $exitValue")
+                    val reader = BufferedReader(InputStreamReader(process.inputStream))
+                    val output = reader.readText()
+                    println(output)
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                        .createNotification(output, NotificationType.ERROR)
+                        .notify(module.project)
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                    .createNotification("No interpreter", NotificationType.ERROR)
+                    .notify(module.project)
+            }
+        } else {
+            // run a command to get the files
+            command = "$pythonPath $scriptPath/pyboard.py -d $devicePath -f rm "
+
+            for (file in files) {
+                val actualFile = file.split("Size")[0]
+                command = "$command $actualFile"
+            }
+
+            try {
+                val process = Runtime.getRuntime().exec(command)
+                process.waitFor()
+                val exitValue = process.exitValue()
+                if (exitValue == 0) {
+                    println("Command executed successfully")
+                    val reader = BufferedReader(InputStreamReader(process.inputStream))
+                    val output = reader.readText()
+                    println(output)
+                    mainText.text = "Files: $files got deleted"
+                    updateCurrentDateTime()
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                        .createNotification("Files got deleted", NotificationType.ERROR)
+                        .notify(module.project)
+                } else {
+                    println("Command failed with exit code $exitValue")
+                    val reader = BufferedReader(InputStreamReader(process.inputStream))
+                    val output = reader.readText()
+                    println(output)
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                        .createNotification(output, NotificationType.ERROR)
+                        .notify(module.project)
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                    .createNotification("No interpreter", NotificationType.ERROR)
+                    .notify(module.project)
+            }
         }
+
     }
 
     private fun getFile(files: List<String>) {
@@ -148,12 +248,62 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
             // get the script path (from the facet)
             val scriptPath = MicroPythonFacet.scriptsPath
 
-            // run a command to get the files
-            var command = "$pythonPath $scriptPath/pyboard.py -d $devicePath -f cp "
+            var command = ""
+
+            if (module.project.firstMicroPythonFacet?.configuration?.deviceProvider?.presentableName?.contains("Micro:bit") == true) {
+                var path = ""
+                if (pythonPath?.contains("/") == true) {
+                    path = pythonPath.split("/").dropLast(1).joinToString("/")
+                } else {
+                    path = pythonPath?.split("\\")?.dropLast(1)?.joinToString("\\")!!
+                }
+
+                command = "$path/ufs get "
+
+                for (file in files) {
+                    val actualFile = file.split("Size")[0]
+                    try {
+                        val process = Runtime.getRuntime().exec("$command$actualFile $directoryPath$actualFile")
+                        process.waitFor()
+                        val exitValue = process.exitValue()
+                        if (exitValue == 0) {
+                            println("Command executed successfully")
+                            val reader = BufferedReader(InputStreamReader(process.inputStream))
+                            val output = reader.readText()
+                            println(output)
+                            mainText.text = "Files: $files got deleted"
+                            updateCurrentDateTime()
+                            NotificationGroupManager.getInstance()
+                                .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                                .createNotification("Files got deleted", NotificationType.ERROR)
+                                .notify(module.project)
+                        } else {
+                            println("Command failed with exit code $exitValue")
+                            val reader = BufferedReader(InputStreamReader(process.inputStream))
+                            val output = reader.readText()
+                            println(output)
+                            NotificationGroupManager.getInstance()
+                                .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                                .createNotification(output, NotificationType.ERROR)
+                                .notify(module.project)
+                        }
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                            .createNotification("No interpreter", NotificationType.ERROR)
+                            .notify(module.project)
+                    }
+                }
+
+            } else {
+                // run a command to get the files
+                command = "$pythonPath $scriptPath/pyboard.py -d $devicePath -f cp "
+            }
 
             for (file in files) {
                 val actualFile = file.split("Size")[0]
-                command = "$command:$actualFile "
+                command = "$command$actualFile "
             }
 
             command = command + module.project.basePath + "/onDevice/"
@@ -168,13 +318,25 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                     val output = reader.readText()
                     println(output)
                     mainText.text = "Files: $files got uploaded"
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                        .createNotification(output, NotificationType.INFORMATION)
+                        .notify(module.project)
                 } else {
                     println("Command failed with exit code $exitValue")
                     val reader = BufferedReader(InputStreamReader(process.inputStream))
                     val output = reader.readText()
                     println(output)
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                        .createNotification(output, NotificationType.ERROR)
+                        .notify(module.project)
                 }
             } catch (e: IOException) {
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                    .createNotification("No Interpreter", NotificationType.ERROR)
+                    .notify(module.project)
                 e.printStackTrace()
             }
         } else {
@@ -208,14 +370,26 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                     val output = reader.readText()
                     println(output)
                     mainText.text = "Files: $files got downloaded"
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                        .createNotification(output, NotificationType.INFORMATION)
+                        .notify(module.project)
                 } else {
                     println("Command failed with exit code $exitValue")
                     val reader = BufferedReader(InputStreamReader(process.inputStream))
                     val output = reader.readText()
                     println(output)
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                        .createNotification(output, NotificationType.ERROR)
+                        .notify(module.project)
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                    .createNotification("No Interpreter", NotificationType.ERROR)
+                    .notify(module.project)
             }
         }
     }

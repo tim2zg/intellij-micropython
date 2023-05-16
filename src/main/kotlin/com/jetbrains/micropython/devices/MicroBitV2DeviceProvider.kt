@@ -10,7 +10,7 @@ class MicroBitV2DeviceProvider : MicroBitDeviceProvider() {
 
     override fun getPackageRequirements(sdk: Sdk): List<PyRequirement> {
         val manager = PyPackageManager.getInstance(sdk)
-        return manager.parseRequirements("""|uflash>=2.0
+        return manager.parseRequirements("""|microfs>=1.4.5
                                             |docopt>=0.6.2,<0.7
                                             |pyserial>=3.5,<4.0""".trimMargin())
     }

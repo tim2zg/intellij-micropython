@@ -42,7 +42,4 @@ tasks {
     runIde {
         dependsOn("copyStubs")
     }
-    publishPlugin {
-        token.set(config("publishToken"))
-    }
 }
