@@ -155,40 +155,38 @@ class FilesWindow(val module: Module, toolWindow: ToolWindow) {
 
             for (file in files) {
                 val actualFile = file.split("Size")[0]
-                command = "$command $actualFile"
-            }
-
-            try {
-                val process = Runtime.getRuntime().exec(command)
-                process.waitFor()
-                val exitValue = process.exitValue()
-                if (exitValue == 0) {
-                    println("Command executed successfully")
-                    val reader = BufferedReader(InputStreamReader(process.inputStream))
-                    val output = reader.readText()
-                    println(output)
-                    mainText.text = "Files: $files got deleted"
-                    updateCurrentDateTime()
+                try {
+                    val process = Runtime.getRuntime().exec("$command $actualFile")
+                    process.waitFor()
+                    val exitValue = process.exitValue()
+                    if (exitValue == 0) {
+                        println("Command executed successfully")
+                        val reader = BufferedReader(InputStreamReader(process.inputStream))
+                        val output = reader.readText()
+                        println(output)
+                        mainText.text = "Files: $files got deleted"
+                        updateCurrentDateTime()
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                            .createNotification("Files got deleted", NotificationType.INFORMATION)
+                            .notify(module.project)
+                    } else {
+                        println("Command failed with exit code $exitValue")
+                        val reader = BufferedReader(InputStreamReader(process.inputStream))
+                        val output = reader.readText()
+                        println(output)
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                            .createNotification(output, NotificationType.ERROR)
+                            .notify(module.project)
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
                     NotificationGroupManager.getInstance()
                         .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                        .createNotification("Files got deleted", NotificationType.INFORMATION)
-                        .notify(module.project)
-                } else {
-                    println("Command failed with exit code $exitValue")
-                    val reader = BufferedReader(InputStreamReader(process.inputStream))
-                    val output = reader.readText()
-                    println(output)
-                    NotificationGroupManager.getInstance()
-                        .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                        .createNotification(output, NotificationType.ERROR)
+                        .createNotification("No interpreter", NotificationType.ERROR)
                         .notify(module.project)
                 }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                NotificationGroupManager.getInstance()
-                    .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                    .createNotification("No interpreter", NotificationType.ERROR)
-                    .notify(module.project)
             }
         } else {
             // run a command to get the files
