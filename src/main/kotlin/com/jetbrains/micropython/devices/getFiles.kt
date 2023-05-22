@@ -4,15 +4,11 @@ import com.intellij.configurationStore.NOTIFICATION_GROUP_ID
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindow
 import com.jetbrains.micropython.settings.MicroPythonDevicesConfiguration
 import com.jetbrains.micropython.settings.MicroPythonFacet
 import com.jetbrains.micropython.settings.firstMicroPythonFacet
 import com.jetbrains.micropython.settings.microPythonFacet
-import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.rootManager
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.io.BufferedReader
@@ -24,7 +20,7 @@ import javax.swing.*
 import kotlin.io.path.Path
 
 
-class hehe(val module: Module, toolWindow: ToolWindow) {
+class FilesWindow(val module: Module, toolWindow: ToolWindow) {
     private val deviceConfiguration = MicroPythonDevicesConfiguration.getInstance(module.project)
     val contentPanel = JPanel()
     private val mainText = JLabel()
@@ -486,6 +482,9 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                 model.add(counter, file.name + " Size: " + file.size)
             }
             counter++
+        }
+        if (files.isEmpty() || files[0].name == "") {
+            model.add(0, "No files on device")
         }
 
     }

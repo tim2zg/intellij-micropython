@@ -23,12 +23,17 @@ fun betterUpload(path: String, module: Module): String {
     Files.walk(Paths.get(path))
         .filter { Files.isRegularFile(it) }
         .forEach {
+            var add = true
             if (it.toString().endsWith(".py")) {
                 for (e in excludeRoots) {
                     if (!it.pathString.contains(e.path.replace("/", "\\"))) {
-                        if (!it.pathString.contains("onDevice")) {
-                            allFiles.add(it.toString())
-                        }
+                    } else {
+                        add = false
+                    }
+                }
+                if (!it.pathString.contains("onDevice")) {
+                    if (add) {
+                        allFiles.add(it.pathString)
                     }
                 }
             }
@@ -39,13 +44,15 @@ fun betterUpload(path: String, module: Module): String {
     val devicePath = facet?.getOrDetectDevicePathSynchronously()
 
 
-    command = pythonPath + " " + MicroPythonFacet.scriptsPath + "/pyboard.py -d " + devicePath + " -f cp "
+    command = pythonPath + " " + MicroPythonFacet.scriptsPath + "/pyboard.py -d " + devicePath + " -f cp"
 
     for (e in allFiles) {
-        command = "$command$e "
+        if (e != "") {
+            command = "$command $e"
+        }
     }
 
-    command = "$command:"
+    command = "$command :"
 
     return command
 

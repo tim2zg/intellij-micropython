@@ -5,19 +5,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
-import com.jetbrains.micropython.devices.hehe
+import com.jetbrains.micropython.devices.FilesWindow
 import com.jetbrains.micropython.repl.MicroPythonReplManager
 import com.jetbrains.micropython.repl.ToolWindowReplTab
 import com.jetbrains.micropython.settings.firstMicroPythonFacet
-import java.awt.BorderLayout
-import java.awt.event.ActionEvent
-import javax.swing.*
 
 
 class MicroPythonToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val contentFactory = ContentFactory.getInstance()
-        val terminalContent = contentFactory.createContent(null, "REPL-TOM", true)
+        val terminalContent = contentFactory.createContent(null, "CMD", true)
 
         project.firstMicroPythonFacet?.let {
             terminalContent.component = ToolWindowReplTab(it.module, terminalContent).createUI()
@@ -27,7 +24,7 @@ class MicroPythonToolWindowFactory : ToolWindowFactory, DumbAware {
         toolWindow.contentManager.setSelectedContent(terminalContent)
 
         project.firstMicroPythonFacet?.let {
-            toolWindow.contentManager.addContent(contentFactory.createContent(hehe(it.module,toolWindow).contentPanel, "Calendar", false))
+            toolWindow.contentManager.addContent(contentFactory.createContent(FilesWindow(it.module,toolWindow).contentPanel, "Files on Device", false))
         }
 
         project.firstMicroPythonFacet?.let {
