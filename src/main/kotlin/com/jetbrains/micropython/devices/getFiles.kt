@@ -353,18 +353,69 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
             // get the script path (from the facet)
             val scriptPath = MicroPythonFacet.scriptsPath
 
-            // run a command to get the files
-            var command = "$pythonPath $scriptPath/pyboard.py -d $devicePath -f cp "
+            var command = ""
+
+            if (module.project.firstMicroPythonFacet?.configuration?.deviceProvider?.presentableName?.contains("Micro:bit") == true) {
+                var path = ""
+                if (pythonPath?.contains("/") == true) {
+                    path = pythonPath.split("/").dropLast(1).joinToString("/")
+                } else {
+                    path = pythonPath?.split("\\")?.dropLast(1)?.joinToString("\\")!!
+                }
+
+                command = "$path/ufs get "
+
+                for (file in files) {
+                    val actualFile = file.split("Size")[0]
+                    try {
+                        val process = Runtime.getRuntime().exec("$command$actualFile $directoryPath$actualFile")
+                        process.waitFor()
+                        val exitValue = process.exitValue()
+                        if (exitValue == 0) {
+                            println("Command executed successfully")
+                            val reader = BufferedReader(InputStreamReader(process.inputStream))
+                            val output = reader.readText()
+                            println(output)
+                            mainText.text = "Files: $files got deleted"
+                            updateCurrentDateTime()
+                            NotificationGroupManager.getInstance()
+                                .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                                .createNotification("Files got deleted", NotificationType.INFORMATION)
+                                .notify(module.project)
+                        } else {
+                            println("Command failed with exit code $exitValue")
+                            val reader = BufferedReader(InputStreamReader(process.inputStream))
+                            val output = reader.readText()
+                            println(output)
+                            NotificationGroupManager.getInstance()
+                                .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                                .createNotification(output, NotificationType.ERROR)
+                                .notify(module.project)
+                        }
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup(NOTIFICATION_GROUP_ID)
+                            .createNotification("No interpreter", NotificationType.ERROR)
+                            .notify(module.project)
+                    }
+                }
+
+            } else {
+                // run a command to get the files
+                command = "$pythonPath $scriptPath/pyboard.py -d $devicePath -f cp "
+            }
 
             for (file in files) {
                 val actualFile = file.split("Size")[0]
-                command = "$command:$actualFile "
+                command = "$command$actualFile "
             }
 
-            command = command + module.project.basePath + "/onDevice/"
-
             try {
-                val process = Runtime.getRuntime().exec(command)
+                val process = Runtime.getRuntime().exec(
+                    command,
+                    arrayOf(module.project.basePath + "/onDevice/")
+                ) // set the working directory to module.project.basePath + "/onDevice/"
                 process.waitFor()
                 val exitValue = process.exitValue()
                 if (exitValue == 0) {
@@ -372,7 +423,7 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                     val reader = BufferedReader(InputStreamReader(process.inputStream))
                     val output = reader.readText()
                     println(output)
-                    mainText.text = "Files: $files got downloaded"
+                    mainText.text = "Files: $files got uploaded"
                     NotificationGroupManager.getInstance()
                         .getNotificationGroup(NOTIFICATION_GROUP_ID)
                         .createNotification(output, NotificationType.INFORMATION)
@@ -388,11 +439,11 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                         .notify(module.project)
                 }
             } catch (e: IOException) {
-                e.printStackTrace()
                 NotificationGroupManager.getInstance()
                     .getNotificationGroup(NOTIFICATION_GROUP_ID)
                     .createNotification("No Interpreter", NotificationType.ERROR)
                     .notify(module.project)
+                e.printStackTrace()
             }
         }
     }
