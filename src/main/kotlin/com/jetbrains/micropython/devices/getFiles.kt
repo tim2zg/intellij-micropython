@@ -114,7 +114,7 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
 
                 NotificationGroupManager.getInstance()
                     .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                    .createNotification("Refreshed Files", NotificationType.ERROR)
+                    .createNotification("Refreshed Files", NotificationType.INFORMATION)
                     .notify(module.project)
             } else {
                 println("Command failed with exit code $exitValue")
@@ -156,6 +156,11 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
             }
 
             command = "$path/ufs rm"
+
+            for (file in files) {
+                val actualFile = file.split("Size")[0]
+                command = "$command $actualFile"
+            }
 
             try {
                 val process = Runtime.getRuntime().exec(command)
@@ -275,7 +280,7 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                             updateCurrentDateTime()
                             NotificationGroupManager.getInstance()
                                 .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                                .createNotification("Files got deleted", NotificationType.ERROR)
+                                .createNotification("Files got deleted", NotificationType.INFORMATION)
                                 .notify(module.project)
                         } else {
                             println("Command failed with exit code $exitValue")
@@ -306,10 +311,8 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
                 command = "$command$actualFile "
             }
 
-            command = command + module.project.basePath + "/onDevice/"
-
             try {
-                val process = Runtime.getRuntime().exec(command)
+                val process = Runtime.getRuntime().exec(command, arrayOf(module.project.basePath + "/onDevice/")) // set the working directory to module.project.basePath + "/onDevice/"
                 process.waitFor()
                 val exitValue = process.exitValue()
                 if (exitValue == 0) {
@@ -428,7 +431,9 @@ class hehe(val module: Module, toolWindow: ToolWindow) {
         val files = getFilesOnDevice()
         var counter = 0
         for (file in files) {
-            model.add(counter, file.name + " Size: " + file.size)
+            if (file.name != "") {
+                model.add(counter, file.name + " Size: " + file.size)
+            }
             counter++
         }
 
