@@ -272,11 +272,11 @@ class FilesWindow(val module: Module, toolWindow: ToolWindow) {
                             val reader = BufferedReader(InputStreamReader(process.inputStream))
                             val output = reader.readText()
                             println(output)
-                            mainText.text = "Files: $files got deleted"
+                            mainText.text = "Files: $files got downloaded"
                             updateCurrentDateTime()
                             NotificationGroupManager.getInstance()
                                 .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                                .createNotification("Files got deleted", NotificationType.INFORMATION)
+                                .createNotification("Files got downloaded", NotificationType.INFORMATION)
                                 .notify(module.project)
                         } else {
                             println("Command failed with exit code $exitValue")
@@ -316,10 +316,10 @@ class FilesWindow(val module: Module, toolWindow: ToolWindow) {
                     val reader = BufferedReader(InputStreamReader(process.inputStream))
                     val output = reader.readText()
                     println(output)
-                    mainText.text = "Files: $files got uploaded"
+                    mainText.text = "Files: $files got downloaded"
                     NotificationGroupManager.getInstance()
                         .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                        .createNotification(output, NotificationType.INFORMATION)
+                        .createNotification("Files got downloaded", NotificationType.INFORMATION)
                         .notify(module.project)
                 } else {
                     println("Command failed with exit code $exitValue")
@@ -480,10 +480,10 @@ class FilesWindow(val module: Module, toolWindow: ToolWindow) {
         for (file in files) {
             if (file.name != "") {
                 model.add(counter, file.name + " Size: " + file.size)
+                counter++
             }
-            counter++
         }
-        if (files.isEmpty() || files[0].name == "") {
+        if (model.isEmpty) {
             model.add(0, "No files on device")
         }
 
